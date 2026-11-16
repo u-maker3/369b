@@ -260,12 +260,12 @@ function renderA4Canvas(){
  const front=personalize(printO?.front||split[0].trim());
  const back=personalize(printO?.back||(split[1]||'').trim());
  const cards=[
-  {title:'表の顔',sub:'周りから見える姿',text:front,bg:'#fff0f6',accent:'#c75289',img:'U'},
-  {title:'裏の顔',sub:'実はこんな一面も',text:back||'気になる本音は、日常の小さな行動に隠れとるで。',bg:'#eff8ec',accent:'#578f57',img:'Y'},
-  {title:'隠れた才能',sub:'ここが強み！',text:personalize(printO?.talent||document.getElementById('talent').textContent),bg:'#fff7e6',accent:'#b7862b',img:'M'},
-  {title:'やらかし注意報',sub:'またやってもうたな',text:personalize(printO?.trouble||document.getElementById('trouble').textContent),bg:'#f1edfc',accent:'#8164b5'},
-  {title:'心の中の本音',sub:'立入検査します',text:personalize(document.getElementById('heart').textContent),bg:'#edf8f9',accent:'#478c95'},
-  {title:'自分の取扱説明書',sub:'大事に扱ってな',text:personalize(printO?`踏んだらあかん地雷：${printO.landmine}\n元気を取り戻す方法：${printO.care}`:document.getElementById('care').textContent),bg:'#fff0eb',accent:'#c47d64'}
+  {title:'表の顔',sub:'周りから見える姿',text:front,bg:'#fff0f6',accent:'#c75289',icon:'sun'},
+  {title:'裏の顔',sub:'実はこんな一面も',text:back||'気になる本音は、日常の小さな行動に隠れとるで。',bg:'#eff8ec',accent:'#578f57',icon:'moon'},
+  {title:'隠れた才能',sub:'ここが強み！',text:personalize(printO?.talent||document.getElementById('talent').textContent),bg:'#fff7e6',accent:'#b7862b',icon:'sparkle'},
+  {title:'やらかし注意報',sub:'またやってもうたな',text:personalize(printO?.trouble||document.getElementById('trouble').textContent),bg:'#f1edfc',accent:'#8164b5',icon:'bolt'},
+  {title:'心の中の本音',sub:'立入検査します',text:personalize(document.getElementById('heart').textContent),bg:'#edf8f9',accent:'#478c95',icon:'heart'},
+  {title:'自分の取扱説明書',sub:'大事に扱ってな',text:personalize(printO?`踏んだらあかん地雷：${printO.landmine}\n元気を取り戻す方法：${printO.care}`:document.getElementById('care').textContent),bg:'#fff0eb',accent:'#c47d64',icon:'book'}
  ];
  const punch=personalize(printO?.punch||document.getElementById('punch').textContent);
  const headline=personalize(document.getElementById('headline').textContent);
@@ -285,6 +285,17 @@ function renderA4Canvas(){
       ctx.drawImage(im,sx,sy,sw,sh,x-w/2,y-h,w,h);
     }
   }
+ function drawCardIcon(kind,x,y,r,color){
+  ctx.save();ctx.translate(x,y);ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=5;ctx.lineCap='round';ctx.lineJoin='round';
+  const line=(a,b,c,d)=>{ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();};
+  if(kind==='sun'){ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();for(let a=0;a<8;a++){let t=a*Math.PI/4;line(Math.cos(t)*17,Math.sin(t)*17,Math.cos(t)*24,Math.sin(t)*24);}}
+  else if(kind==='moon'){ctx.beginPath();ctx.arc(0,0,20,.3*Math.PI,1.7*Math.PI);ctx.arc(10,-7,18,1.4*Math.PI,.55*Math.PI,true);ctx.closePath();ctx.fill();}
+  else if(kind==='sparkle'){ctx.beginPath();ctx.moveTo(0,-25);ctx.quadraticCurveTo(5,-5,23,0);ctx.quadraticCurveTo(5,5,0,25);ctx.quadraticCurveTo(-5,5,-23,0);ctx.quadraticCurveTo(-5,-5,0,-25);ctx.fill();}
+  else if(kind==='bolt'){ctx.beginPath();ctx.moveTo(5,-25);ctx.lineTo(-17,3);ctx.lineTo(0,3);ctx.lineTo(-5,25);ctx.lineTo(19,-7);ctx.lineTo(2,-7);ctx.closePath();ctx.fill();}
+  else if(kind==='heart'){ctx.beginPath();ctx.moveTo(0,19);ctx.bezierCurveTo(-32,-1,-23,-22,-8,-18);ctx.bezierCurveTo(-1,-17,0,-9,0,-9);ctx.bezierCurveTo(10,-28,32,-16,21,1);ctx.bezierCurveTo(16,9,6,16,0,19);ctx.fill();}
+  else if(kind==='book'){ctx.beginPath();ctx.moveTo(0,-17);ctx.quadraticCurveTo(-12,-23,-24,-17);ctx.lineTo(-24,17);ctx.quadraticCurveTo(-12,11,0,18);ctx.quadraticCurveTo(12,11,24,17);ctx.lineTo(24,-17);ctx.quadraticCurveTo(12,-23,0,-17);ctx.closePath();ctx.stroke();line(0,-17,0,18);}
+  ctx.restore();
+ }
  function lines(t,width,size){ctx.font=`${size}px ${font}`;return wrapCanvas(ctx,t,width);}
  function paintText(ls,x,y,size,lh,col){ctx.font=`${size}px ${font}`;ctx.fillStyle=col;for(const l of ls){if(l)ctx.fillText(l,x,y);y+=lh;}return y;}
  // Main background: rounded pastel shapes, not an office-style report.
@@ -294,8 +305,8 @@ function renderA4Canvas(){
  round(112,112,W-224,575,35,'#fff6fa');
  for(const [x,y,r,col] of [[170,190,35,'#e8a9d2'],[2310,180,39,'#b9dfa7'],[215,590,25,'#e3c3f0'],[2250,590,27,'#f4c69f']])flower(x,y,r,col);
  for(const [x,y,r] of [[320,185,17],[2130,225,16],[1220,152,16],[520,540,12],[1920,535,12]])star(x,y,r);
- // Each original character participates as a friendly guide to a different card.
- drawChar('U',660,510,360,330);drawChar('Y',1235,510,360,330);drawChar('M',1810,510,360,330);
+ // The three original characters appear only in the header, left to right: Umeko, Miroku, Yukiko.
+ drawChar('U',660,510,360,330);drawChar('M',1235,510,360,330);drawChar('Y',1810,510,360,330);
  ctx.textAlign='center';ctx.fillStyle='#9e568a';ctx.font=`bold 32px ${font}`;ctx.fillText('✿ みろく流・本性暴露鑑定 ✿',W/2,570);
  const mainTitle=`${name}の本性、バレてまっせ！`;
  let ts=66;ctx.font=`bold ${ts}px ${font}`;while(ctx.measureText(mainTitle).width>2100&&ts>38){ts--;ctx.font=`bold ${ts}px ${font}`;}
@@ -311,9 +322,8 @@ function renderA4Canvas(){
  // Size is computed from actual wrapped text; never silently truncate a diagnosis.
  function layout(sz){
   const lineHeight=Math.ceil(sz*1.48),txtW=colW-105;
-  // Reserve a real, non-text area at the bottom-right for the mascot.
-  // On mascot cards, text uses a narrower column; no characters overlap it.
-  const info=cards.map(k=>({...k,ls:lines(k.text,k.img?txtW-175:txtW,sz)}));
+  // The small illustrations are inside card headings, so all text can use the full width.
+  const info=cards.map(k=>({...k,ls:lines(k.text,txtW,sz)}));
   const rowHeights=[0,1,2].map(i=>Math.max(info[2*i].ls.length,info[2*i+1].ls.length)*lineHeight+158);
   const sum=rowHeights.reduce((a,b)=>a+b,0);
   return {sz,lineHeight,info,rowHeights,sum};
@@ -330,12 +340,11 @@ function renderA4Canvas(){
    const k=lay.info[row*2+side],x=left+side*(colW+gap);
    round(x,yy,colW,height,32,k.bg);
    round(x+18,yy+18,colW-36,91,24,'#ffffff');
-   round(x+35,yy+39,13,48,7,k.accent);
-   ctx.fillStyle=k.accent;ctx.font=`bold 42px ${font}`;ctx.fillText(k.title,x+70,yy+79);
+   drawCardIcon(k.icon,x+60,yy+63,24,k.accent);
+   ctx.fillStyle=k.accent;ctx.font=`bold 42px ${font}`;ctx.fillText(k.title,x+101,yy+79);
    ctx.textAlign='right';ctx.font=`26px ${font}`;ctx.fillText(k.sub,x+colW-38,yy+77);ctx.textAlign='left';
    paintText(k.ls,x+47,yy+160,lay.sz,lay.lineHeight,'#3c3041');
-   // Character badges on the three assigned cards; reuse original supplied art.
-   if(k.img){drawChar(k.img,x+colW-112,yy+height-34,190,176);}
+   // The six card illustrations live in the heading only; full-width prose stays unobstructed.
   }
   yy+=height+(row<2?rowGap:0);
  }
@@ -356,7 +365,7 @@ function renderA4Canvas(){
  return c;
 }
 async function createPng(){
- generate();pngStatus.textContent='Ver.14.3：A4画像を作成中やで…';
+ generate();pngStatus.textContent='Ver.15：A4画像を作成中やで…';
  await new Promise(resolve=>requestAnimationFrame(resolve));
  await ensureMirokuImages();
  const canvas=renderA4Canvas();
