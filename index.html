@@ -178,7 +178,7 @@ function generate(){
  const L=lp[lpN],B=bd[bdN],Y=starTraits[y],M=monthInner[m],P=pairTexts[lpN]?.[y],S=sceneByBD[bdN];
  if(!L||!B||!P||!S){alert('計算結果の原稿が未登録です');return}
  const enteredName=document.getElementById('name').value.trim();
- document.querySelector('#sheet h2').textContent='あんたの本性、バレてまっせ！';
+ document.querySelector('#sheet h2').textContent=(enteredName||'あんた')+'の本性、バレてまっせ！';
  document.querySelector('.hero .small').textContent='01｜あんた、何者やねん';
  document.querySelectorAll('#sheet .section h4').forEach((el,i)=>{const labels=['🎭 周りから見えるあんた','💎 隠しきれん才能','💣 またやってもうたな｜やらかし現場','💔 心の中、立入検査します','🔋 あんたの取扱説明書'];if(labels[i])el.textContent=labels[i]});
  const name=enteredName||'あんた';
@@ -246,82 +246,96 @@ function wrapCanvas(ctx,text,maxWidth){
 }
 function renderA4Canvas(){
  const c=document.createElement('canvas');c.width=2480;c.height=3508;
- const ctx=c.getContext('2d');if(!ctx)throw Error('このブラウザでは画像描画できへんで');
- const W=c.width,H=c.height,margin=145,contentW=W-margin*2;
- const ink='#30223c',purple='#62368b',deep='#332045',gold='#b58a43',muted='#78687e';
- const person=document.getElementById('person').textContent;
- const date=document.getElementById('date').textContent;
- const name=document.getElementById('name').value.trim();
- const headline=document.getElementById('headline').textContent;
- const blocks=[
-  ['01','表の顔｜周りから見える姿',document.getElementById('front').textContent],
-  ['02','隠しきれん才能',document.getElementById('talent').textContent],
-  ['03','またやってもうたな｜やらかし現場',document.getElementById('trouble').textContent],
-  ['04','心の中、立入検査します',document.getElementById('heart').textContent],
-  ['05','自分を扱うための取扱説明書',document.getElementById('care').textContent],
-  ['06','みろく最終監査',document.getElementById('punch').textContent]
+ const ctx=c.getContext('2d');if(!ctx)throw Error('画像描画に対応してへんブラウザやで');
+ const W=2480,H=3508, font='"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif';
+ const entered=document.getElementById('name').value.trim();
+ const name=entered||'あんた';
+ const personalize=t=>String(t||'').replace(/あんた/g,name).replace(/\n{3,}/g,'\n\n');
+ const rawFront=document.getElementById('front').textContent;
+ const split=rawFront.split('【実はこんな裏の顔】');
+ const front=personalize(split[0].trim());
+ const back=personalize((split[1]||'').trim());
+ const cards=[
+  {title:'表の顔',sub:'周りから見える姿',text:front,bg:'#fff0f6',accent:'#c75289',img:'U'},
+  {title:'裏の顔',sub:'実はこんな一面も',text:back||'気になる本音は、日常の小さな行動に隠れとるで。',bg:'#eff8ec',accent:'#578f57',img:'Y'},
+  {title:'隠れた才能',sub:'ここが強み！',text:personalize(document.getElementById('talent').textContent),bg:'#fff7e6',accent:'#b7862b',img:'M'},
+  {title:'やらかし注意報',sub:'またやってもうたな',text:personalize(document.getElementById('trouble').textContent),bg:'#f1edfc',accent:'#8164b5'},
+  {title:'心の中の本音',sub:'立入検査します',text:personalize(document.getElementById('heart').textContent),bg:'#edf8f9',accent:'#478c95'},
+  {title:'自分の取扱説明書',sub:'大事に扱ってな',text:personalize(document.getElementById('care').textContent),bg:'#fff0eb',accent:'#c47d64'}
  ];
- const font='"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif';
- const bottomLimit=H-270;
- function measure(sz){
-  const lh=Math.round(sz*1.54),hSize=Math.round(sz*1.18),hLine=54;
-  ctx.font=`${sz}px ${font}`;
-  const rows=blocks.map(([num,label,body])=>({num,label,lines:wrapCanvas(ctx,body,contentW-115)}));
-  const lengths=rows.map(r=>hLine+r.lines.length*lh+24);
-  const total=lengths.reduce((a,b)=>a+b,0);
-  return {sz,lh,hSize,rows,lengths,total};
+ const punch=personalize(document.getElementById('punch').textContent);
+ const headline=personalize(document.getElementById('headline').textContent);
+ const date=document.getElementById('date').textContent;
+ function round(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+ function flower(x,y,r,col){ctx.save();ctx.translate(x,y);ctx.fillStyle=col;for(let j=0;j<5;j++){ctx.beginPath();ctx.ellipse(Math.sin(j*2*Math.PI/5)*r*.62,Math.cos(j*2*Math.PI/5)*r*.62,r*.43,r*.53,-j*2*Math.PI/5,0,Math.PI*2);ctx.fill();}ctx.fillStyle='#ffe6a2';ctx.beginPath();ctx.arc(0,0,r*.27,0,Math.PI*2);ctx.fill();ctx.restore();}
+ function star(x,y,r){ctx.fillStyle='#e6b656';ctx.beginPath();for(let j=0;j<8;j++){const a=j*Math.PI/4,rr=j%2?r*.26:r;ctx.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);}ctx.closePath();ctx.fill();}
+ function drawChar(key,x,y,maxW,maxH){const im=mirokuImgs[key];if(im&&im.complete&&im.naturalWidth){const scale=Math.min(maxW/im.naturalWidth,maxH/im.naturalHeight);const w=im.naturalWidth*scale,h=im.naturalHeight*scale;ctx.drawImage(im,x-w/2,y+h*-1,w,h);}}
+ function lines(t,width,size){ctx.font=`${size}px ${font}`;return wrapCanvas(ctx,t,width);}
+ function paintText(ls,x,y,size,lh,col){ctx.font=`${size}px ${font}`;ctx.fillStyle=col;for(const l of ls){if(l)ctx.fillText(l,x,y);y+=lh;}return y;}
+ // Main background: rounded pastel shapes, not an office-style report.
+ ctx.fillStyle='#fffdf9';ctx.fillRect(0,0,W,H);
+ round(55,55,W-110,H-110,55,'#f7d9e9');round(72,72,W-144,H-144,46,'#fffdf9');
+ round(96,96,W-192,605,40,'#fff0f7');
+ round(112,112,W-224,575,35,'#fff6fa');
+ for(const [x,y,r,col] of [[170,190,35,'#e8a9d2'],[2310,180,39,'#b9dfa7'],[215,590,25,'#e3c3f0'],[2250,590,27,'#f4c69f']])flower(x,y,r,col);
+ for(const [x,y,r] of [[320,185,17],[2130,225,16],[1220,152,16],[520,540,12],[1920,535,12]])star(x,y,r);
+ // Each original character participates as a friendly guide to a different card.
+ drawChar('U',660,510,270,360);drawChar('Y',1235,510,285,360);drawChar('M',1810,510,275,360);
+ ctx.textAlign='center';ctx.fillStyle='#9e568a';ctx.font=`bold 32px ${font}`;ctx.fillText('✿ みろく流・本性暴露鑑定 ✿',W/2,570);
+ const mainTitle=`${name}の本性、バレてまっせ！`;
+ let ts=66;ctx.font=`bold ${ts}px ${font}`;while(ctx.measureText(mainTitle).width>2100&&ts>38){ts--;ctx.font=`bold ${ts}px ${font}`;}
+ ctx.fillStyle='#51315c';ctx.fillText(mainTitle,W/2,644);
+ ctx.font=`27px ${font}`;ctx.fillStyle='#8c748d';ctx.fillText('世界にひとつの、ちょっと辛口な取扱説明書',W/2,684);
+ ctx.textAlign='left';
+ round(125,726,2230,140,30,'#f1e9fb');
+ ctx.fillStyle='#6a428b';ctx.font=`bold 27px ${font}`;ctx.fillText(`${name}の本性鑑定書`,165,773);
+ ctx.textAlign='right';ctx.font=`27px ${font}`;ctx.fillText(date,2315,773);ctx.textAlign='left';
+ let hs=47;ctx.font=`bold ${hs}px ${font}`;while(ctx.measureText(headline).width>2120&&hs>29){hs--;ctx.font=`bold ${hs}px ${font}`;}
+ ctx.fillStyle='#49305a';ctx.fillText(headline,165,833);
+ const left=125,gap=32,colW=(2230-gap)/2,cardTop=900,cardBottom=3050;
+ // Size is computed from actual wrapped text; never silently truncate a diagnosis.
+ function layout(sz){
+  const lineHeight=Math.ceil(sz*1.48),txtW=colW-105;
+  const info=cards.map(k=>({...k,ls:lines(k.text,txtW,sz)}));
+  const rowHeights=[0,1,2].map(i=>Math.max(info[2*i].ls.length,info[2*i+1].ls.length)*lineHeight+178);
+  const sum=rowHeights.reduce((a,b)=>a+b,0);
+  return {sz,lineHeight,info,rowHeights,sum};
  }
- // Fit all text without shrinking to unreadable sizes; use remaining page space for elegant section spacing.
- let fitted=null;
- for(let sz=48;sz>=30;sz--){const m=measure(sz);if(m.total<=bottomLimit-1020){fitted=m;break;}}
- if(!fitted)throw Error('A4一枚に読める大きさで収まらへん。文章量の調整が必要やで');
- const {sz,lh,hSize,rows,lengths,total}=fitted;
- const extra=Math.max(0,bottomLimit-1020-total);
- const sectionGap=Math.min(100,Math.floor(extra/rows.length));
- ctx.fillStyle='#fffdf9';ctx.fillRect(0,0,W,H);
- // みろく流：3人が並ぶ、花と星の可愛い鑑定書。画像はHTML内蔵でオフライン対応。
- ctx.fillStyle='#fffdf9';ctx.fillRect(0,0,W,H);
- ctx.strokeStyle='#e6b9d4';ctx.lineWidth=9;ctx.strokeRect(68,68,W-136,H-136);
- ctx.strokeStyle='#c5e4bd';ctx.lineWidth=4;ctx.strokeRect(85,85,W-170,H-170);
- ctx.fillStyle='#fceaf2';ctx.fillRect(102,102,W-204,520);
- function flower(x,y,r,col){ctx.save();ctx.translate(x,y);ctx.fillStyle=col;for(let j=0;j<5;j++){ctx.beginPath();ctx.ellipse(Math.sin(j*2*Math.PI/5)*r*.64,Math.cos(j*2*Math.PI/5)*r*.64,r*.44,r*.55,-j*2*Math.PI/5,0,Math.PI*2);ctx.fill();}ctx.fillStyle='#ffe9a1';ctx.beginPath();ctx.arc(0,0,r*.32,0,Math.PI*2);ctx.fill();ctx.restore();}
- function star(x,y,r){ctx.save();ctx.translate(x,y);ctx.fillStyle='#e2ae54';ctx.beginPath();for(let j=0;j<8;j++){let a=j*Math.PI/4,rr=j%2?r*.35:r;ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);}ctx.closePath();ctx.fill();ctx.restore();}
- for(const [x,y,r,c] of [[175,210,38,'#e6a8cf'],[W-170,220,44,'#b6dba3'],[290,555,28,'#e7c5f0'],[W-285,555,30,'#f1c9a0']])flower(x,y,r,c);
- for(const [x,y,r] of [[310,185,17],[W-330,165,18],[W/2,165,17],[W/2-400,510,14],[W/2+405,510,14]])star(x,y,r);
- const chars=[['Y',W/2-550],['U',W/2],['M',W/2+550]];
- for(const [key,x] of chars){const im=mirokuImgs[key];if(im&&im.complete&&im.naturalWidth){const scale=Math.min(360/im.naturalWidth,390/im.naturalHeight);const dw=im.naturalWidth*scale,dh=im.naturalHeight*scale;ctx.drawImage(im,x-dw/2,120+(400-dh),dw,dh);}}
- ctx.textAlign='center';ctx.fillStyle=purple;ctx.font=`bold 36px ${font}`;ctx.fillText('✿ みろく流・本性暴露鑑定 ✿',W/2,655);
- const mainTitle=name?`${name}の本性、バレてまっせ！`:'あんたの本性、バレてまっせ！';
- let titleSize=66;ctx.fillStyle=deep;ctx.font=`bold ${titleSize}px ${font}`;
- while(ctx.measureText(mainTitle).width>contentW-80&&titleSize>38){titleSize--;ctx.font=`bold ${titleSize}px ${font}`;}
- ctx.fillText(mainTitle,W/2,744);
- ctx.font=`29px ${font}`;ctx.fillStyle=muted;ctx.fillText('世界にひとつの、ちょっと辛口な取扱説明書',W/2,793);
- ctx.fillStyle='#e4a5c9';ctx.fillRect(margin,820,contentW,4);
- ctx.textAlign='left';ctx.fillStyle=ink;ctx.font=`bold 35px ${font}`;ctx.fillText(person,margin+8,880);
- ctx.textAlign='right';ctx.font=`29px ${font}`;ctx.fillText(date,W-margin-8,880);ctx.textAlign='left';
- ctx.fillStyle='#f0e9f9';ctx.beginPath();ctx.roundRect(margin,909,contentW,105,25);ctx.fill();
- ctx.fillStyle=deep;let hs=48;ctx.font=`bold ${hs}px ${font}`;
- while(ctx.measureText(headline).width>contentW-110&&hs>32){hs--;ctx.font=`bold ${hs}px ${font}`;}
- ctx.fillText(headline,margin+40,978);
- let y=1040;
- rows.forEach((r,i)=>{
-  const last=i===rows.length-1;
-  const boxH=lengths[i]+Math.max(0,sectionGap-15);
-  if(last){ctx.fillStyle='#fbe4f1';ctx.beginPath();ctx.roundRect(margin,y-14,contentW,boxH+20,22);ctx.fill();}
-  ctx.fillStyle=last?'#f2bdd9':(i%3===0?'#f7d5e6':i%3===1?'#dcebd0':'#e7dcf7');ctx.beginPath();ctx.roundRect(margin+17,y,65,47,14);ctx.fill();
-  ctx.fillStyle=last?deep:purple;ctx.font=`bold 28px ${font}`;ctx.textAlign='center';ctx.fillText(r.num,margin+50,y+33);ctx.textAlign='left';
-  ctx.fillStyle=last?'#aa3579':purple;ctx.font=`bold ${hSize}px ${font}`;ctx.fillText(r.label,margin+105,y+hSize-5);
-  y+=54;
-  ctx.fillStyle=ink;ctx.font=`${sz}px ${font}`;
-  for(const line of r.lines){if(line)ctx.fillText(line,margin+37,y+sz);y+=lh;}
-  y+=24+sectionGap;
- });
- // Bottom anchored footer
- ctx.fillStyle=gold;ctx.fillRect(margin,H-248,contentW,3);
- ctx.fillStyle=purple;ctx.font=`bold 30px ${font}`;ctx.textAlign='center';
- ctx.fillText('異議申し立ては自由。ただし、本性の監査結果は変わりません。',W/2,H-198);
- ctx.fillStyle=muted;ctx.font=`25px ${font}`;
- ctx.fillText('※みろく流による創作的な性格解釈です。診断結果は事実の断定ではありません。',W/2,H-147);
+ let lay=null;for(let sz=47;sz>=31;sz--){const v=layout(sz);if(v.sum+2*28<=cardBottom-cardTop){lay=v;break;}}
+ if(!lay)throw Error('文章がA4一枚に収まりきらへん。省略せずに表示するため、文章量を調整してな');
+ const remaining=cardBottom-cardTop-lay.sum;
+ const rowGap=Math.min(70,Math.max(26,Math.floor(remaining/3)));
+ const extraHeight=Math.max(0,Math.floor((remaining-rowGap*2)/3));
+ let yy=cardTop;
+ for(let row=0;row<3;row++){
+  const height=lay.rowHeights[row]+extraHeight;
+  for(let side=0;side<2;side++){
+   const k=lay.info[row*2+side],x=left+side*(colW+gap);
+   round(x,yy,colW,height,32,k.bg);
+   round(x+18,yy+18,colW-36,91,24,'#ffffff');
+   round(x+35,yy+39,13,48,7,k.accent);
+   ctx.fillStyle=k.accent;ctx.font=`bold 42px ${font}`;ctx.fillText(k.title,x+70,yy+79);
+   ctx.textAlign='right';ctx.font=`26px ${font}`;ctx.fillText(k.sub,x+colW-38,yy+77);ctx.textAlign='left';
+   paintText(k.ls,x+47,yy+160,lay.sz,lay.lineHeight,'#3c3041');
+   // Character badges on the three assigned cards; reuse original supplied art.
+   if(k.img){round(x+colW-144,yy+height-150,113,115,28,'#ffffff');drawChar(k.img,x+colW-88,yy+height-38,93,105);}
+  }
+  yy+=height+rowGap;
+ }
+ const punchY=Math.max(yy+8,3080),punchH=Math.min(230,3260-punchY);
+ if(punchH<145)throw Error('最終監査欄のスペースが足りへん。文章を調整してな');
+ round(125,punchY,2230,punchH,36,'#fce0ef');
+ round(143,punchY+18,1944,65,22,'#fff9fc');
+ ctx.fillStyle='#ae3d78';ctx.font=`bold 42px ${font}`;ctx.fillText('♥ みろく最終監査',175,punchY+67);
+ ctx.font=`${lay.sz}px ${font}`;
+ const punchLines=wrapCanvas(ctx,punch,2120);
+ if(punchLines.length*lay.lineHeight>punchH-105)throw Error('最終監査がA4に収まらへん。文章を調整してな');
+ paintText(punchLines,170,punchY+130,lay.sz,lay.lineHeight,'#4b314b');
+ flower(2240,punchY+55,27,'#e8a9d2');
+ ctx.textAlign='center';ctx.fillStyle='#8e5c8b';ctx.font=`bold 29px ${font}`;
+ ctx.fillText('異議申し立ては自由。ただし、本性の監査結果は変わりません。',W/2,3345);
+ ctx.fillStyle='#8c7e8b';ctx.font=`24px ${font}`;
+ ctx.fillText('※みろく流による創作的な性格解釈です。診断結果は事実の断定ではありません。',W/2,3394);
  return c;
 }
 async function createPng(){
