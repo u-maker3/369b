@@ -311,7 +311,9 @@ function renderA4Canvas(){
  // Size is computed from actual wrapped text; never silently truncate a diagnosis.
  function layout(sz){
   const lineHeight=Math.ceil(sz*1.48),txtW=colW-105;
-  const info=cards.map(k=>({...k,ls:lines(k.text,txtW,sz)}));
+  // Reserve a real, non-text area at the bottom-right for the mascot.
+  // On mascot cards, text uses a narrower column; no characters overlap it.
+  const info=cards.map(k=>({...k,ls:lines(k.text,k.img?txtW-175:txtW,sz)}));
   const rowHeights=[0,1,2].map(i=>Math.max(info[2*i].ls.length,info[2*i+1].ls.length)*lineHeight+158);
   const sum=rowHeights.reduce((a,b)=>a+b,0);
   return {sz,lineHeight,info,rowHeights,sum};
@@ -333,7 +335,7 @@ function renderA4Canvas(){
    ctx.textAlign='right';ctx.font=`26px ${font}`;ctx.fillText(k.sub,x+colW-38,yy+77);ctx.textAlign='left';
    paintText(k.ls,x+47,yy+160,lay.sz,lay.lineHeight,'#3c3041');
    // Character badges on the three assigned cards; reuse original supplied art.
-   if(k.img){drawChar(k.img,x+colW-95,yy+height-28,165,145);}
+   if(k.img){drawChar(k.img,x+colW-112,yy+height-34,190,176);}
   }
   yy+=height+(row<2?rowGap:0);
  }
@@ -354,7 +356,7 @@ function renderA4Canvas(){
  return c;
 }
 async function createPng(){
- generate();pngStatus.textContent='Ver.14.2：A4画像を作成中やで…';
+ generate();pngStatus.textContent='Ver.14.3：A4画像を作成中やで…';
  await new Promise(resolve=>requestAnimationFrame(resolve));
  await ensureMirokuImages();
  const canvas=renderA4Canvas();
