@@ -400,12 +400,17 @@ function renderA4Canvas(){
  const punchY=2950,punchH=235;
  if(yy>punchY-16)throw Error('A4レイアウトの確認が必要やで（本文の高さ）');
  round(125,punchY,2230,punchH,36,'#fce0ef');
- round(143,punchY+14,1944,60,22,'#fff9fc');
- ctx.fillStyle='#ae3d78';ctx.font=`bold 42px ${font}`;ctx.fillText('♥ みろく最終監査',175,punchY+60);
+ // Final audit: distinct heading band and optically centered body text.
+ round(143,punchY+14,1944,62,22,'#fff9fc');
+ ctx.fillStyle='#ae3d78';ctx.font=`bold 42px ${font}`;ctx.fillText('♥ みろく最終監査',175,punchY+59);
  let punchSize=43,punchLines=[];
- for(;punchSize>=19;punchSize--){ctx.font=`${punchSize}px ${font}`;punchLines=wrapCanvas(ctx,punch,2120);if(punchLines.length*Math.ceil(punchSize*1.35)<=punchH-102)break;}
+ const auditBodyTop=punchY+94,auditBodyBottom=punchY+punchH-22;
+ for(;punchSize>=19;punchSize--){ctx.font=`${punchSize}px ${font}`;punchLines=wrapCanvas(ctx,punch,2120);if(punchLines.length*Math.ceil(punchSize*1.35)<=auditBodyBottom-auditBodyTop)break;}
  if(punchSize<19)throw Error('最終監査の文章が長すぎるため、保存できへん');
- paintText(punchLines,170,punchY+106,punchSize,Math.ceil(punchSize*1.35),'#4b314b');
+ const punchLineHeight=Math.ceil(punchSize*1.35);
+ const punchBlockHeight=punchLines.length*punchLineHeight;
+ const punchBodyBaseline=auditBodyTop+(auditBodyBottom-auditBodyTop-punchBlockHeight)/2+punchSize;
+ paintText(punchLines,170,punchBodyBaseline,punchSize,punchLineHeight,'#4b314b');
  flower(2240,punchY+48,27,'#e8a9d2');
  ctx.textAlign='center';ctx.fillStyle='#8e5c8b';ctx.font=`bold 29px ${font}`;
  ctx.fillText('異議申し立ては自由。ただし、本性の監査結果は変わりません。',W/2,3345);
